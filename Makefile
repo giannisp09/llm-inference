@@ -21,8 +21,19 @@ quickstart:  ## Run the quickstart example against a running server
 bench:  ## Benchmark a running server
 	uv run scripts/benchmark.py --concurrency 32 --num-requests 256
 
-test:  ## Run tests (smoke tests need a live server)
+test:  ## Run the full suite (spins up a mock server — no GPU needed)
 	uv run pytest
+
+mock:  ## Run the stdlib mock vLLM server on :8000 (no GPU)
+	uv run python tests/mock_server.py --port 8000
+
+demo-local:  ## No-GPU demo: start the mock, run quickstart + batching + prefix-caching, stop it
+	@uv run python tests/mock_server.py --port 8000 & echo $$! > /tmp/llm-mock.pid; \
+	sleep 1.5; \
+	uv run examples/01_quickstart.py; echo; \
+	uv run examples/03_continuous_batching.py; echo; \
+	uv run examples/04_prefix_caching.py; \
+	kill `cat /tmp/llm-mock.pid` 2>/dev/null; rm -f /tmp/llm-mock.pid
 
 lint:  ## Lint with ruff
 	uv run ruff check .

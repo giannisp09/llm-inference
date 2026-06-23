@@ -162,6 +162,35 @@ Grafana ships with a pre-wired dashboard for the key serving metrics
 
 ---
 
+## Validate & test (no GPU required)
+
+vLLM itself needs a Linux GPU, but you can validate the *whole repo* — client, metrics scraper,
+streaming, and all the examples — on any machine. The test suite ships a small stdlib
+**OpenAI-compatible mock server** (`tests/mock_server.py`); `conftest.py` uses a real vLLM server
+on `:8000` if one is running, otherwise spins up the mock automatically.
+
+```bash
+make test          # 9 tests, runs end-to-end against the mock — no GPU, no skips
+make demo-local    # start the mock, run quickstart + batching + prefix-caching, stop it
+make mock          # just run the mock on :8000 to poke at by hand
+```
+
+What this proves vs. what it doesn't:
+
+- ✅ **Validated locally / in CI:** the OpenAI client integration, metrics parsing, streaming/SSE,
+  logprobs handling, prefix-cache accounting, and every example's control flow.
+- 🖥️ **Needs a real GPU:** actual generation quality and performance — those are properties of the
+  vLLM engine, demonstrated on a GPU (see the one-click Colab demo below).
+
+### Try the real engine — one-click Colab demo (free T4 GPU)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/giannisp09/llm-inference/blob/main/examples/colab_demo.ipynb)
+
+Opens a notebook that installs vLLM, serves `Qwen/Qwen3-0.6B` on Colab's free GPU, and runs the
+quickstart, continuous-batching, prefix-caching, and metrics demos against the **real** engine.
+
+---
+
 ## Deploy to Kubernetes
 
 ```bash
