@@ -22,7 +22,9 @@ KEY_METRICS = [
 ]
 
 
-def get_vllm_metrics(base_url: str = "http://localhost:8000", timeout: float = 5.0) -> dict[str, float]:
+def get_vllm_metrics(
+    base_url: str = "http://localhost:8000", timeout: float = 5.0
+) -> dict[str, float]:
     """Scrape `/metrics` and return {name: value}.
 
     For metrics with labels, the last-seen sample for a given name wins. That is fine for the

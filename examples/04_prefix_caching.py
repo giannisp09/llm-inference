@@ -15,9 +15,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from openai import OpenAI  # noqa: E402
+
 from llm_inference.client import wait_for_server  # noqa: E402
 from llm_inference.metrics import get_vllm_metrics  # noqa: E402
-from openai import OpenAI  # noqa: E402
 
 BASE_URL = "http://localhost:8000"
 

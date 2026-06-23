@@ -6,8 +6,10 @@ readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = { text = "Apache-2.0" }
 authors = [{ name = "llm-inference contributors" }]
+# Core deps are lightweight and pure-Python — the client, config loader, metrics scraper,
+# examples, and tests run anywhere (incl. macOS). The serving engine itself is a separate,
+# heavy, platform-specific concern (see the `serve` extra) usually run via Docker.
 dependencies = [
-    "vllm>=0.6.0",
     "openai>=1.40.0",
     "requests>=2.31.0",
     "pyyaml>=6.0",
@@ -15,6 +17,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Install where you actually run the engine (Linux + GPU, or the Docker image).
+# vLLM has no macOS/Windows wheels, so this is intentionally NOT in core deps.
+serve = [
+    "vllm>=0.6.0",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6.0",

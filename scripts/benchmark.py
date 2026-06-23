@@ -18,8 +18,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from llm_inference.client import wait_for_server  # noqa: E402
 from openai import OpenAI  # noqa: E402
+
+from llm_inference.client import wait_for_server  # noqa: E402
 
 PROMPT = "Explain why LLM inference is memory-bound, in two sentences."
 
@@ -87,12 +88,13 @@ def main() -> None:
     print(f"  Wall time:         {wall:.2f}s")
     print(f"  Throughput:        {total_tokens / wall:.1f} tokens/s")
     print(f"  Mean latency:      {statistics.mean(latencies):.2f}s")
-    print(f"  p50 / p95 / p99:   "
-          f"{_percentile(latencies, 50):.2f} / "
-          f"{_percentile(latencies, 95):.2f} / "
-          f"{_percentile(latencies, 99):.2f}s")
-    print(f"  TTFT p50 / p95:    "
-          f"{_percentile(ttfts, 50):.3f} / {_percentile(ttfts, 95):.3f}s")
+    print(
+        f"  p50 / p95 / p99:   "
+        f"{_percentile(latencies, 50):.2f} / "
+        f"{_percentile(latencies, 95):.2f} / "
+        f"{_percentile(latencies, 99):.2f}s"
+    )
+    print(f"  TTFT p50 / p95:    {_percentile(ttfts, 50):.3f} / {_percentile(ttfts, 95):.3f}s")
 
 
 if __name__ == "__main__":

@@ -43,18 +43,23 @@ Kubernetes manifests in `deploy/k8s/` run it for real with GPU scheduling and an
 - **Examples must run against a live server on `localhost:8000`** and degrade gracefully if it's
   down (print a clear "start the server first" message — see `client.wait_for_server`).
 - Keep examples thin and readable; they double as documentation.
-- Python 3.10–3.12 (vLLM has no 3.13+ wheels yet). The host here runs 3.14 — use a 3.12 venv for
-  anything that imports vLLM.
+- **Tooling is uv.** `.python-version` pins 3.12 (vLLM has no 3.13+ wheels). uv fetches that
+  interpreter regardless of the system Python, so don't hand-roll venvs. Run things with `uv run`.
+- **`vllm` is the `serve` extra, not a core dep** — it has no macOS/Windows wheels. Core deps
+  (openai/requests/pyyaml/prometheus-client) are pure-Python, so the client, config, examples, and
+  tests run anywhere. Only `uv sync --extra serve` (Linux+GPU) or the Docker image pulls in vLLM.
 
 ## Common commands
 
 ```bash
-./scripts/serve.sh qwen3-0.6b              # serve a model from its config
-python examples/01_quickstart.py           # smoke-test the API
-python scripts/benchmark.py --concurrency 32
+uv sync --extra dev                        # local env (no engine)
+uv sync --extra dev --extra serve          # + vLLM (Linux/GPU)
+./scripts/serve.sh qwen3-0.6b              # serve a model from its config (uses uv run)
+uv run examples/01_quickstart.py           # smoke-test the API
+uv run scripts/benchmark.py --concurrency 32
 cd docker && docker compose up             # full stack with monitoring
-pytest -q                                  # tests (smoke tests need a live server)
-ruff check . && ruff format .              # lint + format
+uv run pytest                              # tests (smoke tests need a live server)
+uv run ruff check . && uv run ruff format .
 ```
 
 ## Key serving metrics (from `/metrics`)

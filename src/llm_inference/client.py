@@ -44,7 +44,7 @@ class InferenceClient:
         self.openai = OpenAI(base_url=f"{self.base_url}/v1", api_key=api_key)
         self.model: str | None = None
 
-    def ready(self, timeout: float = 300.0) -> "InferenceClient":
+    def ready(self, timeout: float = 300.0) -> InferenceClient:
         self.model = wait_for_server(self.base_url, timeout=timeout)
         return self
 

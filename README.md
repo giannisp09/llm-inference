@@ -28,11 +28,20 @@ serving engine, configuration, containerization, Kubernetes manifests, autoscali
 
 ### 1. Install
 
+This repo uses [uv](https://docs.astral.sh/uv/). The pinned interpreter is in `.python-version`
+(3.12 — vLLM has no wheels for 3.13+), so uv fetches/uses the right Python automatically even if
+your system Python is newer.
+
 ```bash
-# Python 3.10–3.12 (vLLM does not yet support 3.13+)
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"        # or: pip install -r requirements.txt
+# Local dev (client, config, examples, tests) — works on macOS/Linux/Windows:
+uv sync --extra dev
+
+# Where you actually run the engine (Linux + GPU): also pull in vLLM:
+uv sync --extra dev --extra serve
 ```
+
+Run anything inside the env with `uv run` (e.g. `uv run examples/01_quickstart.py`) — no manual
+activation needed. Prefer plain pip? `pip install -e ".[dev,serve]"` still works.
 
 ### 2. Serve a model
 
@@ -50,7 +59,7 @@ The server exposes the OpenAI routes (`/v1/models`, `/v1/chat/completions`, `/v1
 ### 3. Query it
 
 ```bash
-python examples/01_quickstart.py
+uv run examples/01_quickstart.py
 ```
 
 ```python

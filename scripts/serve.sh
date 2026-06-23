@@ -6,6 +6,7 @@
 #   ./scripts/serve.sh llama3-8b --port 8001
 #
 # Engine flags come from the YAML; this script just translates it into a `vllm serve` call.
+# Uses `uv run` when available (respects .python-version → 3.12), else falls back to python.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,8 +16,16 @@ shift || true
 HOST="${VLLM_HOST:-0.0.0.0}"
 PORT="${VLLM_PORT:-8000}"
 
-# Build the command from the config (config.py knows the YAML->CLI mapping).
-CMD="$(cd "$REPO_ROOT" && PYTHONPATH=src python -m llm_inference.config "$CONFIG" --host "$HOST" --port "$PORT")"
+# Pick a runner: uv (preferred) keeps us on the pinned interpreter + project env.
+if command -v uv >/dev/null 2>&1 && [ -f "$REPO_ROOT/pyproject.toml" ]; then
+  RUN=(uv run --project "$REPO_ROOT")
+else
+  RUN=(env PYTHONPATH="$REPO_ROOT/src" python)
+fi
+
+# Build the `vllm serve ...` command from the config (config.py knows the YAML->CLI mapping).
+CMD="$(cd "$REPO_ROOT" && "${RUN[@]}" -m llm_inference.config "$CONFIG" --host "$HOST" --port "$PORT")"
 
 echo ">>> $CMD $*"
-exec env ${VLLM_API_KEY:+VLLM_API_KEY="$VLLM_API_KEY"} $CMD "$@"
+# Run vllm through the same runner so it resolves from the project env.
+exec env ${VLLM_API_KEY:+VLLM_API_KEY="$VLLM_API_KEY"} "${RUN[@]}" $CMD "$@"

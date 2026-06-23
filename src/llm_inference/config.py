@@ -67,9 +67,7 @@ def load_config(name_or_path: str) -> ModelConfig:
         path = CONFIGS_DIR / f"{name_or_path}.yaml"
     if not path.exists():
         available = ", ".join(sorted(p.stem for p in CONFIGS_DIR.glob("*.yaml")))
-        raise FileNotFoundError(
-            f"No config '{name_or_path}'. Available: {available or '(none)'}"
-        )
+        raise FileNotFoundError(f"No config '{name_or_path}'. Available: {available or '(none)'}")
     data = yaml.safe_load(path.read_text())
     return ModelConfig(
         model=data["model"],
