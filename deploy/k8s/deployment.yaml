@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-inference
+  labels: { app: vllm-inference }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: vllm-inference }
+  template:
+    metadata:
+      labels: { app: vllm-inference }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
+    spec:
+      containers:
+        - name: vllm
+          image: llm-inference:local        # push to your registry and update this
+          imagePullPolicy: IfNotPresent
+          args: ["$(MODEL_CONFIG)"]          # serve.sh entrypoint takes the config name
+          env:
+            - name: MODEL_CONFIG
+              value: "qwen3-0.6b"
+            - name: HF_HOME
+              value: "/cache/huggingface"
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef: { name: hf-token, key: token, optional: true }
+          ports:
+            - { name: http, containerPort: 8000 }
+          resources:
+            limits:
+              nvidia.com/gpu: "1"            # one GPU per replica; raise with tensor_parallel_size
+              memory: "24Gi"
+            requests:
+              cpu: "4"
+              memory: "16Gi"
+          # vLLM can take a while to download weights + warm up; give it room before probes bite.
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            failureThreshold: 60             # up to 10 min to become ready
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 20
+            failureThreshold: 6
+          volumeMounts:
+            - { name: hf-cache, mountPath: /cache/huggingface }
+            - { name: shm, mountPath: /dev/shm }
+      volumes:
+        - name: hf-cache
+          persistentVolumeClaim: { claimName: hf-cache }
+        # vLLM/NCCL need a large /dev/shm, especially with tensor parallelism.
+        - name: shm
+          emptyDir: { medium: Memory, sizeLimit: 8Gi }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hf-cache
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 100Gi

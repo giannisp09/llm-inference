@@ -1,0 +1,65 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "title": "vLLM Inference Serving",
+  "uid": "vllm-serving",
+  "tags": ["vllm", "llm", "inference"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requests running vs waiting",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "vllm:num_requests_running", "legendFormat": "running" },
+        { "expr": "vllm:num_requests_waiting", "legendFormat": "waiting" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "KV cache usage (%)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1 } },
+      "targets": [
+        { "expr": "vllm:gpu_cache_usage_perc", "legendFormat": "gpu" },
+        { "expr": "vllm:cpu_cache_usage_perc", "legendFormat": "cpu" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Throughput (tokens/s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "rate(vllm:generation_tokens_total[1m])", "legendFormat": "generation" },
+        { "expr": "rate(vllm:prompt_tokens_total[1m])", "legendFormat": "prompt" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Time to first token (p50/p95/p99)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(vllm:time_to_first_token_seconds_bucket[1m]))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, rate(vllm:time_to_first_token_seconds_bucket[1m]))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, rate(vllm:time_to_first_token_seconds_bucket[1m]))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Prefix cache hit rate",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1 } },
+      "targets": [
+        {
+          "expr": "rate(vllm:prefix_cache_hits_total[1m]) / clamp_min(rate(vllm:prefix_cache_queries_total[1m]), 1)",
+          "legendFormat": "hit rate"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+# Production-scale instruct model. Requires a GPU and an HF token (gated repo).
+model: meta-llama/Llama-3.1-8B-Instruct
+served_model_name: llama3-8b
+
+engine:
+  dtype: bfloat16
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+  tensor_parallel_size: 1          # bump to 2/4/8 to shard across GPUs
+  enable_prefix_caching: true
+  enable_chunked_prefill: true
+
+sampling:
+  temperature: 0.7
+  top_p: 0.9

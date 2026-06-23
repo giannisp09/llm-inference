@@ -1,0 +1,43 @@
+[project]
+name = "llm-inference"
+version = "0.1.0"
+description = "Production-ready LLM inference serving with vLLM (OpenAI-compatible API)"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { text = "Apache-2.0" }
+authors = [{ name = "llm-inference contributors" }]
+dependencies = [
+    "vllm>=0.6.0",
+    "openai>=1.40.0",
+    "requests>=2.31.0",
+    "pyyaml>=6.0",
+    "prometheus-client>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6.0",
+    "numpy>=1.26",
+]
+
+[project.scripts]
+llm-serve = "llm_inference.config:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

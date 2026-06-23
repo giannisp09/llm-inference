@@ -1,0 +1,60 @@
+# Full local stack: vLLM + Prometheus + Grafana.
+#   docker compose up
+# vLLM :8000 · Prometheus :9090 · Grafana :3000 (admin/admin)
+#
+# Requires the NVIDIA Container Toolkit for GPU access. On CPU-only hosts, serve a small model
+# directly with ../scripts/serve.sh instead.
+
+services:
+  vllm:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: llm-inference:local
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_CONFIG: ${MODEL_CONFIG:-qwen3-0.6b}
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HOME: /root/.cache/huggingface
+    volumes:
+      # Persist the HF cache so weights download once.
+      - hf-cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - vllm
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    volumes:
+      - ../deploy/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../deploy/monitoring/grafana:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  hf-cache:

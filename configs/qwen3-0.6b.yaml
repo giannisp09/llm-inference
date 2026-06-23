@@ -1,0 +1,16 @@
+# Small, fast model that runs on CPU or GPU. Great default for smoke tests.
+model: Qwen/Qwen3-0.6B
+served_model_name: qwen3-0.6b
+
+engine:
+  dtype: bfloat16
+  max_model_len: 4096
+  gpu_memory_utilization: 0.90
+  tensor_parallel_size: 1
+  enable_prefix_caching: true
+
+# Default sampling params (clients can override per request).
+sampling:
+  temperature: 0.7
+  top_p: 0.8
+  top_k: 20

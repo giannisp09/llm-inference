@@ -1,0 +1,16 @@
+# Quantized (W4A16 GPTQ) example — ties back to the llm-compressor lesson.
+# Quantized formats only have optimized runtime support on GPUs.
+model: Qwen/Qwen3-8B-GPTQ-Int4
+served_model_name: qwen3-8b-gptq
+
+engine:
+  dtype: auto                 # let vLLM pick the activation dtype for the quant format
+  quantization: gptq_marlin   # fast GPTQ kernel; use "compressed-tensors" for llm-compressor output
+  max_model_len: 8192
+  gpu_memory_utilization: 0.90
+  tensor_parallel_size: 1
+  enable_prefix_caching: true
+
+sampling:
+  temperature: 0.7
+  top_p: 0.8

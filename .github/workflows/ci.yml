@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (lint/test deps only — vLLM not needed for unit tests)
+        run: pip install ruff pytest pyyaml requests
+      - name: Lint
+        run: ruff check .
+      - name: Unit tests
+        # Smoke tests self-skip without a live server; config tests run here.
+        run: PYTHONPATH=src pytest tests/test_config.py
