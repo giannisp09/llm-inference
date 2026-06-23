@@ -12,6 +12,61 @@ serving engine, configuration, containerization, Kubernetes manifests, autoscali
 
 ---
 
+## Architecture
+
+A model config drives the engine; clients speak the OpenAI API; Prometheus + Grafana watch it.
+
+```mermaid
+flowchart LR
+    subgraph clients["Clients"]
+        sdk["OpenAI SDK / curl<br/>examples/ · benchmark.py"]
+    end
+
+    subgraph server["vLLM server :8000"]
+        api["OpenAI-compatible API<br/>/v1/chat/completions · /v1/completions"]
+        sched["Continuous-batching scheduler<br/>(token-level)"]
+        engine["Engine: PagedAttention<br/>+ prefix caching + quantization"]
+        kv[("Paged KV cache<br/>fixed-size blocks")]
+        api --> sched --> engine --> kv
+        engine --> metrics["/metrics (Prometheus)"]
+        api --> health["/health"]
+    end
+
+    cfg["configs/&lt;model&gt;.yaml"] -->|serve.sh builds argv| server
+    weights[("HF Hub weights<br/>cached on disk")] --> engine
+    sdk -->|HTTP| api
+
+    subgraph obs["Observability"]
+        prom["Prometheus"] --> graf["Grafana dashboard"]
+    end
+    metrics --> prom
+```
+
+**Deployment topology** — the same image runs under Compose locally or Kubernetes in production:
+
+```mermaid
+flowchart TB
+    subgraph k8s["Kubernetes"]
+        svc["Service (ClusterIP)"]
+        hpa["HorizontalPodAutoscaler<br/>scales on num_requests_waiting"]
+        subgraph pods["vLLM pods (1 GPU each)"]
+            p1["vllm-inference<br/>+ /health probes"]
+            p2["vllm-inference"]
+        end
+        pvc[("HF-cache PVC")]
+        svc --> p1 & p2
+        hpa -. watches queue depth .-> pods
+        p1 & p2 --> pvc
+    end
+    ingress["Client traffic"] --> svc
+    p1 & p2 --> promk["Prometheus → Grafana"]
+```
+
+The request path (`client → API → scheduler → PagedAttention → KV cache`) is what makes the
+serving optimizations in the table below concrete.
+
+---
+
 ## Why vLLM
 
 | Feature | Benefit |
